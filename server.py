@@ -20,7 +20,7 @@ class Client(threading.Thread):
         client_on_str = ""
         for user in Client.client_dict:
             client_on_str = client_on_str + user + '\n'
-        client_on_str = client_on_str + "**********\n"
+        client_on_str = client_on_str + "--------------\n"
         return client_on_str
 
 
@@ -33,22 +33,27 @@ class Client(threading.Thread):
 
     def private_chat(self,data,aim_id,user_id):
         result = ""
-        if aim_id in Client.client_dict:
-            context = "%s跟你说：%s        %s"%(user_id,data,ctime())
-            aim_sock = Client.client_dict['aim_id']
-            aim_sock.send(context.encode('utf-8'))
-            print("%s跟%s说：%s     %s"%(user_id,data,ctime()))
-            result = "发送成功！        %s"%ctime()
+        print("aim_id"+aim_id)
+        print("user_id"+user_id)
+        if aim_id == user_id:
+            result = "不可以给自己发消息！"
         else:
-            result = "发送失败！该用户不在线！      %s"%ctime()
+            if aim_id in Client.client_dict:
+                context = "%s跟你说：%s        %s"%(user_id,data,ctime())
+                print context
+                aim_sock = Client.client_dict[aim_id]
+                aim_sock.send(context.encode('utf-8'))
+                print("%s跟%s说：%s     %s"%(user_id,aim_id,data,ctime()))
+                result = "发送成功！        %s"%ctime()
+                print("result:"+result)
+            else:
+                result = "发送失败！该用户不在线！      %s"%ctime()
         return result
 
 
     def run(self):
         user_id = self.sock.recv(1024).decode('utf-8')
         Client.client_dict[user_id] = self.sock
-        #client_online = self.online()
-        #self.sock.send(("当前在线人员:\n**********  %s\n%s"%(ctime(),client_online)).encode('utf-8'))
         air_data = "%s 已连接！     %s"%(user_id,ctime())
         self.airing(air_data)
         try:
@@ -60,16 +65,19 @@ class Client(threading.Thread):
                     air_data = "%s 已下线！     %s"%(user_id,ctime())
                     print("%s 已下线！"%user_id)
                     self.airing(air_data)
+                    self.sock.close()
+                    break
                 elif message == "privatechat":
                     aim_id = self.sock.recv(1024).decode('utf-8')
                     data = self.sock.recv(1024).decode('utf-8')
                     result = self.private_chat(data,aim_id,user_id)
+                    print(result)
                     self.sock.send(result.encode('utf-8'))
                 elif message == "online":
                     print("ooooooooo")
                     client_online = self.online()
                     print(client_online)
-                    self.sock.send(("当前在线人员:\n**********  %s\n%s"%(ctime(),client_online)).encode('utf-8'))
+                    self.sock.send(("当前在线人员:\n--------------  %s\n%s"%(ctime(),client_online)).encode('utf-8'))
                     print("ok")
                 else:
                     self.sock.send("无该命令！".encode('utf-8'))
@@ -99,21 +107,6 @@ def func_accept_client(s):
         client_sock,client_addr = s.accept()
         Client_connect = Client(client_sock,client_addr)
         Client_connect.start()
-#def func_accept_client(s):
-#    conn_cli,addr_cli = s.accept()
-#    while True:
-#        try:
-#            data_cli = conn_cli.recv(1024)
-#            if len(data_cli):
-#                print("客户端说：%s"%data_cli)
-#                data_serv = raw_input("服务端说：")
-                 
-#                conn_cli.sendall(data_serv)
-#        except Exception,e:
-#            print e
-#            conn_cli.close()
-#            sys.exit(0)
-
 
 if __name__ == '__main__':
     ip_addr = ("127.0.0.1",8000)

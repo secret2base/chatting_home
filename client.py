@@ -7,7 +7,6 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 
 
-is_exit = False
 def func_connect_server(ip_addr):
     try:
         c = socket.socket()
@@ -18,7 +17,6 @@ def func_connect_server(ip_addr):
         sys.exit(1)
 
 def func_accept_server(c):
-    #global is_exit
     while True:
         data = c.recv(1024).decode('utf-8')
         print(data)
@@ -27,9 +25,11 @@ def func_accept_server(c):
 def func_chat(c):
     user_id = raw_input("请输入你的用户名：")
     c.send(user_id.encode('utf-8'))
-    print("online:显示当前在线的人")
-    print("privatechat:私聊")
-    print("exit:退出")
+    print("******************************")
+    print("*online     :显示当前在线的人*")
+    print("*privatechat:私聊            *")
+    print("*exit       :退出            *")
+    print("******************************")
     s = threading.Thread(target=func_accept_server, args=(c,))
     s.setDaemon(True)
     s.start()
@@ -39,10 +39,8 @@ def func_chat(c):
     while True:
         order = raw_input("请输入你的命令：")
         c.send(order.encode('utf-8'))
-        print(type(order))
         if order == 'exit':
-            print("聊天结束，三秒后退出")
-    #        is_exit = True
+            print("聊天结束")
             break
         elif order == 'privatechat':
             aim_id = raw_input("接收者ID：")
@@ -53,7 +51,6 @@ def func_chat(c):
             continue
     
     print("退出中...")
-    time.sleep(3)
     c.close()
 
 

@@ -33,19 +33,15 @@ class Client(threading.Thread):
 
     def private_chat(self,data,aim_id,user_id):
         result = ""
-        print("aim_id"+aim_id)
-        print("user_id"+user_id)
         if aim_id == user_id:
             result = "不可以给自己发消息！"
         else:
             if aim_id in Client.client_dict:
                 context = "%s跟你说：%s        %s"%(user_id,data,ctime())
-                print context
                 aim_sock = Client.client_dict[aim_id]
                 aim_sock.send(context.encode('utf-8'))
                 print("%s跟%s说：%s     %s"%(user_id,aim_id,data,ctime()))
                 result = "发送成功！        %s"%ctime()
-                print("result:"+result)
             else:
                 result = "发送失败！该用户不在线！      %s"%ctime()
         return result
@@ -59,7 +55,6 @@ class Client(threading.Thread):
         try:
             while True:
                 message = self.sock.recv(1024).decode('utf-8')
-                print(message)
                 if message == 'exit':
                     Client.client_dict.pop(user_id)
                     air_data = "%s 已下线！     %s"%(user_id,ctime())
@@ -67,18 +62,20 @@ class Client(threading.Thread):
                     self.airing(air_data)
                     self.sock.close()
                     break
-                elif message == "privatechat":
+                elif message == "pchat":
                     aim_id = self.sock.recv(1024).decode('utf-8')
-                    data = self.sock.recv(1024).decode('utf-8')
-                    result = self.private_chat(data,aim_id,user_id)
-                    print(result)
-                    self.sock.send(result.encode('utf-8'))
+                    while True:
+                        data = self.sock.recv(1024).decode('utf-8')
+                        if data != 'q':
+                            result = self.private_chat(data,aim_id,user_id)
+                            self.sock.send(result.encode('utf-8'))
+                        else:
+                            break
+
                 elif message == "online":
-                    print("ooooooooo")
                     client_online = self.online()
                     print(client_online)
                     self.sock.send(("当前在线人员:\n--------------  %s\n%s"%(ctime(),client_online)).encode('utf-8'))
-                    print("ok")
                 else:
                     self.sock.send("无该命令！".encode('utf-8'))
                     continue
